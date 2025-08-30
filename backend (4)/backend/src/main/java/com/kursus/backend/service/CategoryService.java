@@ -47,4 +47,12 @@ public class CategoryService {
         }
         categoryRepository.deleteById(id);
     }
+
+    public Category toggleCategoryStatus(Long id) {
+        throw new UnsupportedOperationException("Unimplemented method 'toggleCategoryStatus'");
+    }
+
+    public Object getCategoryCount() {
+        throw new UnsupportedOperationException("Unimplemented method 'getCategoryCount'");
+    }
 }

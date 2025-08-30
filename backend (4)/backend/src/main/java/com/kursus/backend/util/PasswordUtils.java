@@ -3,11 +3,13 @@ package com.kursus.backend.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PasswordUtils {
     private static final String HASH_ALGORITHM = "SHA-256";
     
-    public static String hashPassword(String password) {
+    public String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] hashedBytes = md.digest(password.getBytes());
@@ -21,11 +23,11 @@ public class PasswordUtils {
         }
     }
     
-    public static boolean verifyPassword(String inputPassword, String hashedPassword) {
+    public boolean verifyPassword(String inputPassword, String hashedPassword) {
         return hashPassword(inputPassword).equals(hashedPassword);
     }
     
-    public static String generateRandomPassword(int length) {
+    public String generateRandomPassword(int length) {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
         SecureRandom random = new SecureRandom();
         StringBuilder password = new StringBuilder();
@@ -35,5 +37,10 @@ public class PasswordUtils {
         }
         
         return password.toString();
+    }
+
+    public String encryptPassword(String password) {
+        // Implementation for password encryption
+        return hashPassword(password);
     }
 }

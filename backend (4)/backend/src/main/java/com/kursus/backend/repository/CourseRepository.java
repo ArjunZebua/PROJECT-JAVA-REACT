@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -24,23 +26,44 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Page<Course> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
         String title, String description, Pageable pageable);
 
-    // ✅ Popular courses query
-    @Query("SELECT c FROM Course c LEFT JOIN c.enrollments e " +
-           "GROUP BY c ORDER BY COUNT(e) DESC")
-    List<Course> findTopCoursesByEnrollmentCount(@Param("limit") int limit);
-
-    // Alternative jika tidak ada enrollments table
-    @Query(value = "SELECT * FROM courses ORDER BY created_at DESC LIMIT :limit", 
+    // ✅ Popular courses - FIXED: Gunakan Pageable untuk limit
+    @Query(value = "SELECT c.* FROM courses c " +
+                   "LEFT JOIN enrollments e ON c.id = e.course_id " +
+                   "GROUP BY c.id " +
+                   "ORDER BY COUNT(e.id) DESC", 
            nativeQuery = true)
-    List<Course> findTopCoursesByCreatedAt(@Param("limit") int limit);
+    List<Course> findTopCoursesByEnrollmentCountAll();
+
+    // ✅ Alternative: Jika tabel enrollments belum ada, gunakan berdasarkan created_at
+    @Query(value = "SELECT * FROM courses WHERE is_active = true " +
+                   "ORDER BY created_at DESC", 
+           nativeQuery = true)
+    List<Course> findTopCoursesByCreatedAtAll();
 
     // ✅ Statistics methods
     Long countByIsActive(Boolean isActive);
     
-    @Query("SELECT AVG(SIZE(c.enrollments)) FROM Course c")
-    Double getAverageEnrollmentCount();
+    // Get average price
+    @Query("SELECT AVG(c.price) FROM Course c WHERE c.price IS NOT NULL")
+    BigDecimal getAveragePrice();
     
-    // Alternative jika tidak ada enrollments
-    @Query("SELECT COUNT(c) FROM Course c")
-    Double getAverageEnrollmentCountAlternative();
+    // ✅ FIXED: Total enrollments query  
+    @Query(value = "SELECT COALESCE(COUNT(e.id), 0) FROM enrollments e", nativeQuery = true)
+    Long getTotalEnrollments();
+    
+    // ✅ Alternative jika enrollments table belum ada
+    @Query(value = "SELECT COUNT(*) FROM courses", nativeQuery = true) 
+    Long getTotalEnrollmentsAlternative();
+    
+    // Get courses by instructor
+    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
+    
+    // Get courses by price range
+    @Query("SELECT c FROM Course c WHERE c.price BETWEEN :minPrice AND :maxPrice")
+    Page<Course> findByPriceRange(@Param("minPrice") BigDecimal minPrice, 
+                                 @Param("maxPrice") BigDecimal maxPrice, 
+                                 Pageable pageable);
+
+    // ✅ FIXED: Ganti nama method sesuai dengan field di Course entity
+    long countByCreatedAtAfter(LocalDateTime startOfMonth);
 }

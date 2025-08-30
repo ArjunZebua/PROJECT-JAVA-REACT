@@ -18,19 +18,22 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
     
+    // ✅ GET all categories -> /api/categories
     @GetMapping
     public ResponseEntity<List<Category>> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
     
+    // ✅ GET category by ID -> /api/categories/{id}
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
         Optional<Category> category = categoryService.getCategoryById(id);
         return category.map(ResponseEntity::ok)
-                      .orElse(ResponseEntity.notFound().build());
+                       .orElse(ResponseEntity.notFound().build());
     }
     
+    // ✅ CREATE category -> POST /api/categories
     @PostMapping
     public ResponseEntity<Category> createCategory(@RequestBody Category category) {
         try {
@@ -41,6 +44,7 @@ public class CategoryController {
         }
     }
     
+    // ✅ UPDATE category -> PUT /api/categories/{id}
     @PutMapping("/{id}")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
         try {
@@ -51,6 +55,7 @@ public class CategoryController {
         }
     }
     
+    // ✅ DELETE category -> DELETE /api/categories/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         try {

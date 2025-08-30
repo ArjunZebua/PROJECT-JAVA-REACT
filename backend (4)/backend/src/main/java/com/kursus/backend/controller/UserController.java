@@ -2,6 +2,11 @@ package com.kursus.backend.controller;
 
 import com.kursus.backend.model.User;
 import com.kursus.backend.service.UserService;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,8 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
+@SuppressWarnings("unused")
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
@@ -39,19 +43,18 @@ public class UserController {
     
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        Optional<User> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok)
-                   .orElse(ResponseEntity.notFound().build());
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
     
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        try {
             User savedUser = userService.createUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+            return ResponseEntity.ok(savedUser);
     }
     
     @PutMapping("/{id}")
@@ -59,31 +62,40 @@ public class UserController {
         try {
             User updatedUser = userService.updateUser(id, userDetails);
             return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }
     
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
+   @DeleteMapping("/{id}")
+public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
+    try {
+        userService.deleteUser(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User berhasil dihapus");
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.notFound().build();
+    }
+}
+    
+   @PatchMapping("/{id}/status")
+public ResponseEntity<User> toggleUserStatus(@PathVariable Long id) {
+    try {
+        // Pastikan user masih exist sebelum toggle
+        User existingUser = userService.getUserById(id);
+        if (existingUser == null) {
             return ResponseEntity.notFound().build();
         }
+        
+        User user = userService.toggleUserStatus(id);
+        return ResponseEntity.ok(user);
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.notFound().build();
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
-    
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<User> toggleUserStatus(@PathVariable Long id) {
-        try {
-            User user = userService.toggleUserStatus(id);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-    
+}
     @GetMapping("/search")
     public ResponseEntity<Page<User>> searchUsers(
             @RequestParam String query,
@@ -101,12 +113,15 @@ public class UserController {
         return ResponseEntity.ok(count);
     }
     
-    @GetMapping("/stats")
-    public ResponseEntity<UserStats> getUserStats() {
-        UserStats stats = userService.getUserStats();
-        return ResponseEntity.ok(stats);
-    }
+
     
+    // @GetMapping("/stats")
+    // public ResponseEntity<UserStats> getUserStats() {
+    //     // UserStats stats = userService.getUserStats();
+    //     return ResponseEntity.ok(stats);
+    // }
+    
+    // DTO untuk statistik
     public static class UserStats {
         private long totalUsers;
         private long activeUsers;
@@ -120,17 +135,10 @@ public class UserController {
             this.instructors = instructors;
         }
         
-        // Getters and setters
+        // Getters
         public long getTotalUsers() { return totalUsers; }
-        public void setTotalUsers(long totalUsers) { this.totalUsers = totalUsers; }
-        
         public long getActiveUsers() { return activeUsers; }
-        public void setActiveUsers(long activeUsers) { this.activeUsers = activeUsers; }
-        
         public long getNewUsersThisMonth() { return newUsersThisMonth; }
-        public void setNewUsersThisMonth(long newUsersThisMonth) { this.newUsersThisMonth = newUsersThisMonth; }
-        
         public long getInstructors() { return instructors; }
-        public void setInstructors(long instructors) { this.instructors = instructors; }
     }
 }

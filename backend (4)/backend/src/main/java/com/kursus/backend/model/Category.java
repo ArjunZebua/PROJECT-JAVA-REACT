@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "categories")
 public class Category {
@@ -21,6 +23,8 @@ public class Category {
     private LocalDateTime createdAt = LocalDateTime.now();
     
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // JSON response dari backend rusak (tidak valid) karena ada relasi dua arah (bi-directional) antara Course ↔ Category.
+    @JsonManagedReference
     private List<Course> courses;
     
     // Constructors, getters, setters
@@ -46,3 +50,5 @@ public class Category {
     public List<Course> getCourses() { return courses; }
     public void setCourses(List<Course> courses) { this.courses = courses; }
 } 
+
+
